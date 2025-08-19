@@ -1,0 +1,8 @@
+pip freeze - is to check these install or not 
+
+
+drf - website visit django rest framework
+django simple jwt 
+
+
+django cors header
