@@ -44,9 +44,9 @@ class User(AbstractBaseUser):
         unique=True,
     )
     name = models.CharField(max_length=200)
-    actress = models.CharField(max_length=100, blank=True)
     username = models.CharField(max_length=100, blank=True)
     phone_number = models.CharField(max_length=10, blank=True)
+    permanent_address = models.CharField(max_length=100, blank=True)
     image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
     otp = models.CharField(max_length=6, blank=True, null=True)  # OTP field
 

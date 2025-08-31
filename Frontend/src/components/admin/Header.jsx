@@ -1,16 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
 import { HiMenu } from "react-icons/hi";
 import { useAuthStore } from "../store/authStore";
+import EditProfile from "../model/EditProfile";
+import Setting from "../model/Setting";
+import DeleteAccount from "../model/DeleteAccount";
 
 const Header = ({ setSidebarOpen }) => {
-      const { isAuthenticated,  user } = useAuthStore();
-      
-useEffect(() => {
-  console.log("isAuthenticated:", isAuthenticated);
-  console.log("User:", user);
-}, [isAuthenticated, user]);
+  const { isAuthenticated, user } = useAuthStore();
 
+  useEffect(() => {
+    console.log("isAuthenticated:", isAuthenticated);
+    console.log("User:", user);
+  }, [isAuthenticated, user]);
 
+  const [openModal, setOpenModal] = useState(null); // "edit", "setting", or null
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -19,9 +22,21 @@ useEffect(() => {
   };
 
   const handleEdit = () => {
-    console.log("Edit profile clicked");
+    setOpenModal("edit");
     setIsDropdownOpen(false);
   };
+
+  const handleSettings = () => {
+    setOpenModal("setting");
+    setIsDropdownOpen(false);
+  };
+
+  const handleDelete = () => {
+    setOpenModal("delete");
+    setIsDropdownOpen(false);
+  };
+
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -37,7 +52,7 @@ useEffect(() => {
   }, []);
 
   return (
-    <header className="bg-white shadow-sm z-10">
+    <header className="bg-white shadow-sm">
       <div className="flex items-center justify-between px-4 py-4 sm:px-6">
         {/* Sidebar Toggle Button */}
         <button
@@ -64,42 +79,58 @@ useEffect(() => {
               onClick={toggleDropdown}
             >
               <span className="sr-only">Open user menu</span>
-            <div
-  className="border-2 border-gray-300 rounded-full w-10 h-10 flex items-center justify-center 
-  text-sm font-medium hover:bg-blue-100 hover:border-blue-400 cursor-pointer transition-all duration-200"
->
-  {user?.name ? user.name.charAt(0).toUpperCase() : "A"}
-</div>
-
+              <div
+                className="border-2 border-gray-300 rounded-full w-10 h-10 flex items-center justify-center 
+                text-sm font-medium hover:bg-blue-100 hover:border-blue-400 cursor-pointer transition-all duration-200"
+              >
+                {user?.name ? user.name.charAt(0).toUpperCase() : "A"}
+              </div>
             </button>
 
             {/* Dropdown Menu */}
             {isDropdownOpen && (
               <div
-                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5"
+                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-md ring-1 ring-black/5"
                 role="menu"
                 aria-orientation="vertical"
                 aria-labelledby="user-menu-button"
               >
                 <a
                   onClick={handleEdit}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  className="block px-4 py-2 text-sm text-gray-700 m-1 cursor-pointer 
+                  hover:rounded-sm hover:bg-gray-100 transition-all duration-300 font-medium"
                   role="menuitem"
                 >
                   Edit Profile
                 </a>
 
                 <a
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  onClick={handleSettings}
+                  className="block px-4 py-2 text-sm text-gray-700 m-1 cursor-pointer 
+                  hover:rounded-sm hover:bg-gray-100 transition-all duration-300 font-medium"
                   role="menuitem"
                 >
                   Settings
+                </a>
+
+                <a
+                  onClick={handleDelete}
+                  className="block px-4 py-2 text-sm text-gray-700 m-1 cursor-pointer 
+                  hover:rounded-sm hover:bg-gray-100 transition-all duration-300 font-medium"
+                  role="menuitem"
+                >
+                Delete account
                 </a>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {openModal === "edit" && <EditProfile   user={user}  onClose={() => setOpenModal(null)} />}
+      {openModal === "setting" && <Setting onClose={() => setOpenModal(null)} />}
+      {openModal === "delete" && <DeleteAccount onClose={() => setOpenModal(null)} />}
     </header>
   );
 };

@@ -43,7 +43,7 @@ const SignupPage = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white text-gray-700 max-w-lg w-full p-8 rounded-xl shadow-lg"
       >
-        <h2 className="text-2xl font-bold mb-8 text-center text-gray-800">Sign Up</h2>
+        <h2 className="text-2xl font-bold mb-8 text-center text-gray-800">Create New Account</h2>
 
         {/* Name */}
         <label htmlFor="name" className="font-medium block mb-1">Name</label>

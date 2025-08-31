@@ -1,10 +1,9 @@
 import React from "react";
-import { Mail, ArrowLeft,Loader } from "lucide-react";
+import { Mail, ArrowLeft, Loader } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/authStore";
-
 
 const ForgotPassword = () => {
   const { forgotPassword, isLoading, error } = useAuthStore();
@@ -13,14 +12,14 @@ const ForgotPassword = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors }
+    formState: { errors },
   } = useForm();
 
   const onSubmit = async (data) => {
     try {
       await forgotPassword(data.email);
       toast.success("Reset link sent successfully!");
-      reset({email: ""});
+      reset();
     } catch (err) {
       toast.error(error || "Email not found. Please enter a registered email.");
     }
@@ -40,10 +39,18 @@ const ForgotPassword = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <label htmlFor="email" className="font-medium block mb-2 text-gray-700">
+          <label
+            htmlFor="email"
+            className="font-medium block mb-2 text-gray-700"
+          >
             Email Address
           </label>
-          <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-indigo-400">
+          <div
+            className={`flex items-center rounded-lg overflow-hidden transition-colors focus-within:ring-2 
+              ${errors.email 
+                ? "border border-red-500 focus-within:ring-red-500" 
+                : "border border-gray-300 focus-within:border-indigo-500 focus-within:ring-indigo-500"}`}
+          >
             <span className="pl-3 text-gray-500">
               <Mail size={18} />
             </span>
@@ -56,28 +63,35 @@ const ForgotPassword = () => {
                 required: "Email is required",
                 pattern: {
                   value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Enter a valid email address"
-                }
+                  message: "Enter a valid email address",
+                },
               })}
             />
           </div>
-          {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+          {errors.email && (
+            <p className="text-red-500 text-sm">{errors.email.message}</p>
+          )}
 
           {/* Reset Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-[#66659F] hover:bg-[#55548F] transition-colors py-3 rounded-lg text-white font-semibold shadow-sm hover:shadow-md disabled:opacity-50"
+            className="w-full bg-[#66659F] hover:bg-[#55548F] transition-colors py-3 rounded-lg text-white font-semibold shadow-sm hover:shadow-md disabled:opacity-50 flex justify-center items-center"
           >
-          
-
-                 {isLoading ? <Loader className="w-6 h-6 animate-spin mx-auto" /> : "Reset Password"}
+            {isLoading ? (
+              <Loader className="w-6 h-6 animate-spin" />
+            ) : (
+              "Reset Password"
+            )}
           </button>
         </form>
 
         {/* Back to Login */}
         <div className="text-center">
-          <Link to="/" className="inline-flex items-center text-sm text-[#66659F] hover:underline">
+          <Link
+            to="/"
+            className="inline-flex items-center text-sm text-[#66659F] hover:underline"
+          >
             <ArrowLeft size={16} className="mr-1" />
             Back to Login
           </Link>

@@ -15,6 +15,13 @@ export const useAuthStore = create(
       message: null,
       email: null, // <-- add this in the store
 
+
+           getAccessToken: async () => {
+        const accessToken = localStorage.getItem("access_token");
+        return accessToken;
+      },
+
+
       // Register Function
  registerUser: async (email, name, password, password2) => {
   set({ isLoading: true, error: null });
@@ -44,25 +51,37 @@ export const useAuthStore = create(
   }
 },
 
-
-
-
           // Login function
-      login: async (email, password) => {
+ login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
           const response = await axios.post(
             `${API_URL}/login/`,
             { email, password }
           );
-console.log("Response Headers: ", response.headers);
-console.log("login successful:", response.data);
-          set({
-            isAuthenticated: true,
-            user: response.data.user,
-            error: null,
-            isLoading: false,
-          });
+          console.log("Response Headers: ", response.headers);
+          console.log("login successful:", response.data);
+
+          // --- FIX START ---
+          // The access token is nested inside the 'token' object in your API response.
+          const accessToken = response.data.token.access;
+
+          if (accessToken) {
+            localStorage.setItem("access_token", accessToken);
+            set({
+              isAuthenticated: true,
+              // Assuming the user data is not returned directly in login response
+              // you might need another API call to fetch user profile using the token
+              user: response.data.user || null,
+              error: null,
+              isLoading: false,
+            });
+            console.log("Access token stored:", accessToken);
+          } else {
+             throw new Error("Access token not found in response");
+          }
+          // --- FIX END ---
+
         } catch (error) {
           set({
             error: error.response?.data?.message || "Error logging in",
@@ -71,6 +90,8 @@ console.log("login successful:", response.data);
           throw error;
         }
       },
+    
+
 
 verifyEmail: async (code) => {
   set({ isLoading: true, error: null });
@@ -98,8 +119,6 @@ verifyEmail: async (code) => {
 },
 
 
-
-
       // Forgot password function
       forgotPassword: async (email) => {
         set({ isLoading: true, error: null });
@@ -114,15 +133,13 @@ verifyEmail: async (code) => {
           throw error;
         }
       },
-
-
-
        
 // Reset password function
 resetPassword: async (uid, token, newPassword, confirmPassword) => {
   set({ isLoading: true, error: null });
   try {
     const response = await axios.post(
+      
       `${API_URL}/reset-passwod/${uid}/${token}/`,
       {
         new_password: newPassword,
@@ -140,6 +157,47 @@ resetPassword: async (uid, token, newPassword, confirmPassword) => {
     throw error;
   }
 }
+,
+
+
+
+updateProfile: async (profileData) => {
+  set({ isLoading: true, error: null });
+  try {
+    // Convert profileData to FormData if image is included
+    const formData = new FormData();
+    for (const key in profileData) {
+      if (profileData[key] !== undefined && profileData[key] !== null) {
+        formData.append(key, profileData[key]);
+      }
+    }
+
+    const response = await axios.put(`${API_URL}/profile/`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${localStorage.getItem("access")}`, // if using JWT
+      },
+      withCredentials: true, // if using cookies
+    });
+
+
+    set({
+      user: { ...useAuthStore.getState().user, ...response.data },
+      isLoading: false,
+      message: "Profile updated successfully",
+    });
+
+    return { success: true, message: "Profile updated successfully" };
+  } catch (error) {
+    console.log(error)
+    set({
+      error: error.response?.data || "Update failed",
+      isLoading: false,
+    });
+    throw error;
+  }
+}
+
 
 
 
