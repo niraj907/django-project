@@ -160,49 +160,94 @@ resetPassword: async (uid, token, newPassword, confirmPassword) => {
 ,
 
 
-
 updateProfile: async (profileData) => {
-  set({ isLoading: true, error: null });
-  try {
-    // Convert profileData to FormData if image is included
-    const formData = new FormData();
-    for (const key in profileData) {
-      if (profileData[key] !== undefined && profileData[key] !== null) {
-        formData.append(key, profileData[key]);
-      }
+    set({ isLoading: true, error: null });
+    const accessToken = await useAuthStore.getState().getAccessToken();
+    if (!accessToken) {
+        const errorMsg = "Authentication Error: No access token found.";
+        set({ isLoading: false, error: errorMsg });
+        // It's better to throw an error here to be caught by the component
+        throw new Error(errorMsg);
     }
 
-    const response = await axios.put(`${API_URL}/profile/`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${localStorage.getItem("access")}`, // if using JWT
-      },
-      withCredentials: true, // if using cookies
-    });
+    try {
+        const formData = new FormData();
+        for (const key in profileData) {
+            if (profileData[key] !== undefined && profileData[key] !== null) {
+                formData.append(key, profileData[key]);
+            }
+        }
+
+        // ✅ Step 1: Capture the response from the API call
+        const response = await axios.put(`${API_URL}/profile/`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${accessToken}`,
+            },
+            withCredentials: true,
+        });
+
+        // ✅ Step 2: Use the user data from the response to update the store
+        // Your Postman response shows the user data is nested under a "user" key.
+        if (response.data && response.data.user) {
+            set({
+                user: response.data.user, // Use the complete user object from the server
+                isLoading: false,
+                error: null,
+            });
+        }
+
+        // ✅ Step 3: Return the successful response data
+        return response.data;
+
+    } catch (error) {
+        console.log("Error updating profile:", error);
+        set({
+            error: error.response?.data || "Update failed",
+            isLoading: false,
+        });
+        throw error;
+    }
+},
 
 
-    set({
-      user: { ...useAuthStore.getState().user, ...response.data },
-      isLoading: false,
-      message: "Profile updated successfully",
-    });
+ changePassword: async (old_password, new_password, confirm_password) => {
+    set({ isLoading: true, error: null, message: null });
+        const accessToken = await useAuthStore.getState().getAccessToken();
+    if (!accessToken) {
+        const errorMsg = "Authentication Error: No access token found.";
+        set({ isLoading: false, error: errorMsg });
+        // It's better to throw an error here to be caught by the component
+        throw new Error(errorMsg);
+    }
+    try {
+      const response = await axios.post(
+        `${API_URL}/changePassword/`,
+        { old_password, new_password, confirm_password },
+        {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${accessToken}`,
+            },
+            withCredentials: true, }
+      );
 
-    return { success: true, message: "Profile updated successfully" };
-  } catch (error) {
-    console.log(error)
-    set({
-      error: error.response?.data || "Update failed",
-      isLoading: false,
-    });
-    throw error;
-  }
-}
+      set({ message: response.data.message, isLoading: false });
+      return response.data;
+    } catch (error) {
+      set({
+        error: error.response?.data || "Error updating password",
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+
+    }),
 
 
 
-
-      
-          }),
 
     {
       name: "auth-store", // Key for localStorage

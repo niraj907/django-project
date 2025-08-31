@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { X, Camera } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
-import { toast } from "sonner"
+import { toast } from "sonner";
+
+
+// ✅ 1. Define the missing constant for your backend URL
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 const EditProfile = ({ user, onClose }) => {
-  const { updateProfile, isLoading, error } = useAuthStore();
+  const { updateProfile, isLoading } = useAuthStore();
 
-  // Initialize form data with user data
   const [formData, setFormData] = useState({
     name: user?.name || "",
     username: user?.username || "",
@@ -15,10 +18,23 @@ const EditProfile = ({ user, onClose }) => {
     permanent_address: user?.permanent_address || "",
   });
 
-  const [preview, setPreview] = useState(user?.image || null); // for preview
-  const [selectedFile, setSelectedFile] = useState(null); // for upload
+  const [preview, setPreview] = useState(user?.image || null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
-  // --- Handlers ---
+  // ✅ 2. Make the function more robust to handle non-string values
+  const getImageUrl = (imagePath) => {
+    // If imagePath is not a string or is empty/null, return null
+    if (typeof imagePath !== 'string' || !imagePath) {
+      return null;
+    }
+    // If it's a blob URL from the file preview, use it directly
+    if (imagePath.startsWith('blob:')) {
+      return imagePath;
+    }
+    // Otherwise, it's a path from the server, so prepend the base URL
+    return `${API_BASE_URL}${imagePath}`;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -37,11 +53,11 @@ const EditProfile = ({ user, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const profileData = {
         ...formData,
-        image: selectedFile, // file object
+        // Only include the image if a new one was selected
+        ...(selectedFile && { image: selectedFile }),
       };
 
       await updateProfile(profileData);
@@ -50,7 +66,7 @@ const EditProfile = ({ user, onClose }) => {
       onClose();
     } catch (err) {
       console.error("Error updating profile:", err);
-      toast.error("Failed to update profile");
+      toast.error("Failed to update profile. Please try again.");
     }
   };
 
@@ -91,15 +107,14 @@ const EditProfile = ({ user, onClose }) => {
                   Profile Photo
                 </label>
                 <div className="relative group">
-                <img
-  src={
-    preview ||
-    `https://ui-avatars.com/api/?name=${user?.name || "A"}&background=random&size=128`
-  }
-  alt={user?.name ? user.name.charAt(0).toUpperCase() : "A"}
-  className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md"
-/>
-
+                  <img
+                    src={
+                      getImageUrl(preview) ||
+                      `https://ui-avatars.com/api/?name=${user?.name || "A"}&background=random&size=128`
+                    }
+                    alt={user?.name ? user.name.charAt(0).toUpperCase() : "A"}
+                    className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md"
+                  />
                   <label
                     htmlFor="avatar-upload"
                     className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
@@ -160,12 +175,12 @@ const EditProfile = ({ user, onClose }) => {
                   {/* Permanent Address */}
                   <div>
                     <label
-                       htmlFor="permanent_address"
+                      htmlFor="permanent_address"
                       className="block text-sm font-medium text-gray-700"
                     >
                       Permanent Address
                     </label>
-                      <input
+                    <input
                       type="text"
                       id="permanent_address"
                       name="permanent_address"
@@ -194,15 +209,14 @@ const EditProfile = ({ user, onClose }) => {
                       placeholder="Enter mobile number"
                     />
                   </div>
-
-                
+                  
                   {/* Email Input (read-only) */}
                   <div className="sm:col-span-2">
                     <label
-                       htmlFor="email"
+                      htmlFor="email"
                       className="block text-sm font-medium text-gray-700"
                     >
-                          Email Address
+                      Email Address
                     </label>
                     <input
                       type="email"
@@ -212,10 +226,7 @@ const EditProfile = ({ user, onClose }) => {
                       disabled
                       className="mt-1 block w-full px-3 py-2 border rounded-md bg-gray-100"
                     />
-
                   </div>
-
-
                 </div>
               </div>
             </div>
@@ -233,7 +244,7 @@ const EditProfile = ({ user, onClose }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-md hover:bg-indigo-700"
+              className="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? "Saving..." : "Save Changes"}
             </button>
