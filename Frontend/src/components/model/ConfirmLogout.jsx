@@ -2,7 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { MdLogout } from 'react-icons/md';
 
-const ConfirmLogout = ({ onClose, message }) => {
+const ConfirmLogout = ({ onClose, onConfirm,  message }) => {
   return (
     <div
       role="dialog"
@@ -46,7 +46,8 @@ const ConfirmLogout = ({ onClose, message }) => {
           </button>
           <button
             className="px-5 py-2 text-sm font-medium text-white bg-[#66659F] rounded-lg hover:bg-[#66659F73] transition"
-           
+           onClick={onConfirm}
+          
           >
             Logout
           </button>

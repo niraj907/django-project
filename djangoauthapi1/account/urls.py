@@ -1,5 +1,5 @@
 from django.urls import path, include
-from account.views import AllUserProfileView, LogoutView, SendPasswordResetEmailView, UserChangePasswordView, UserLoginView, UserPasswordResetView, UserProfileView, UserRegistrationView , VerifyOTPView
+from account.views import AllUserProfileView, DeleteAccountView, LogoutView, SendPasswordResetEmailView, UserChangePasswordView, UserLoginView, UserPasswordResetView, UserProfileView, UserRegistrationView , VerifyOTPView
 
 urlpatterns = [
     path('register/',UserRegistrationView.as_view(),name="register"),
@@ -11,6 +11,7 @@ urlpatterns = [
     path('send-rest-password-email/',SendPasswordResetEmailView.as_view(),name="send-rest-password-email"),
     path('reset-passwod/<uid>/<token>/',UserPasswordResetView.as_view(),name='reset-passwod'),
     path('logout/', LogoutView.as_view(), name='logout'),
+     path('deleteAccount/', DeleteAccountView.as_view(), name="deleteAccount"),
 
  
 ]

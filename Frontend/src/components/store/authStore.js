@@ -244,6 +244,114 @@ updateProfile: async (profileData) => {
   },
 
 
+// DeleteAccount : async () => {
+//   set({ isLoading: true, error: null, message: null });
+
+//   const accessToken = await useAuthStore.getState().getAccessToken();
+//   if (!accessToken) {
+//     const errorMsg = "Authentication Error: No access token found.";
+//     set({ isLoading: false, error: errorMsg });
+//     throw new Error(errorMsg);
+//   }
+
+//   try {
+//     // Send DELETE request with authentication header
+//     const response = await axios.delete(`${API_URL}/deleteAccount/`, {
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//       withCredentials: true,
+//     });
+
+//     // Clear store + remove token
+//     localStorage.removeItem("access_token");
+
+//     set({
+//       user: null,
+//       isAuthenticated: false,
+//       message: response.data.message || "Account deleted successfully",
+//       isLoading: false,
+//     });
+
+//     return { success: true, message: response.data.message };
+//   } catch (error) {
+//     set({
+//       isLoading: false,
+//       error: error.response?.data?.message || "Error deleting account",
+//     });
+//     return { success: false, message: "Error deleting account" };
+//   }
+// },
+
+
+
+DeleteAccount: async () => {
+  const accessToken = await useAuthStore.getState().getAccessToken();
+  if (!accessToken) {
+    throw new Error("Authentication Error: No access token found.");
+  }
+
+  try {
+    const response = await axios.delete(`${API_URL}/deleteAccount/`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      withCredentials: true,
+    });
+
+    // Clear token and reset store
+    localStorage.removeItem("access_token");
+    useAuthStore.setState({
+      user: null,
+      isAuthenticated: false,
+      message: response.data.message || "Account deleted successfully",
+    });
+
+    return { success: true, message: response.data.message };
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Error deleting account");
+  }
+},
+
+
+
+
+      logout: async () => {
+        try {
+          const accessToken = localStorage.getItem("access_token");
+   
+          const response = await axios.post(
+            `${API_URL}/logout/`,
+            null, 
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+
+          console.log("Logout successful:", response.data);
+
+          
+          localStorage.removeItem("access_token");
+       
+          localStorage.removeItem("auth-store");
+
+          set({
+            user: null,
+            isAuthenticated: false,
+            message: "Logged out successfully", 
+            error: null,
+          });
+        } catch (error) {
+          console.error("Logout error:", error);
+          set({
+            error: error.response?.data?.detail || "Logout failed",
+          });
+        }
+      },
+
     }),
 
 

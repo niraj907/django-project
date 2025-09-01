@@ -4,11 +4,14 @@ import { LogOut } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from "@/assets/logo.png"
 import ConfirmLogout from '../model/ConfirmLogout';
+import { useAuthStore } from '../store/authStore';
+import { toast } from "sonner";
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+ const { logout } = useAuthStore();
 
   const navigation = [
     {
@@ -35,6 +38,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     },
   ];
 
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logout successful", { duration: 900 });
+      localStorage.clear();
+      navigate("/");
+    } catch (error) {
+      toast.error("Logout failed", { duration: 900 });
+    } finally {
+      setShowModal(false);
+    }
+  };
 
 
   return (
@@ -106,7 +122,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       {showModal && (
         <ConfirmLogout
           onClose={() => setShowModal(false)}
-          // onConfirm={handleLogout}
+          onConfirm={handleLogout}
           message="Are you sure you want to log out?"
         />
       )}

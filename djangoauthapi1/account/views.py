@@ -207,3 +207,15 @@ class LogoutView(APIView):
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        user = request.user   # ✅ Get the logged-in user
+        user.delete()         # ✅ Delete user from DB
+        return Response(
+            {"message": "Your account has been deleted successfully."},
+            status=status.HTTP_200_OK
+        )
