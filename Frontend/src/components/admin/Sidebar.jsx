@@ -2,43 +2,25 @@ import React, { useState } from 'react';
 import { HiX } from 'react-icons/hi';
 import { LogOut } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import logo from "@/assets/logo.png"
-import ConfirmLogout from '../model/ConfirmLogout';
+import logo from "@/assets/logo.png";
 import { useAuthStore } from '../store/authStore';
 import { toast } from "sonner";
+import Confirm from '../model/Confirm';
+import { logoutModalData } from '../model/confirmdata';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
- const { logout } = useAuthStore();
+  const { logout } = useAuthStore();
 
   const navigation = [
-    {
-      name: 'Dashboard',
-      path: '/dashboard',
-      current: location.pathname === '/dashboard',
-    },
-    {
-      name: 'Projects',
-      path: '/dashboard/projects',
-      current: location.pathname === '/dashboard/projects',
-    },
-    {
-      name: 'Form',
-      path: '/dashboard/multi-form',
-      current: location.pathname === '/dashboard/multi-form',
-    },
-   
-
-     {
-      name: 'Manage',
-      path: '/dashboard/manage',
-      current: location.pathname === '/dashboard/manage',
-    },
+    { name: 'Dashboard', path: '/dashboard', current: location.pathname === '/dashboard' },
+    { name: 'Category', path: '/dashboard/category', current: location.pathname === '/dashboard/category' },
+    { name: 'Form', path: '/dashboard/multi-form', current: location.pathname === '/dashboard/multi-form' },
+    { name: 'Manage', path: '/dashboard/manage', current: location.pathname === '/dashboard/manage' },
   ];
 
-  // Logout handler
   const handleLogout = async () => {
     try {
       await logout();
@@ -52,40 +34,18 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     }
   };
 
-
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      {isOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setIsOpen(false)} />}
 
-      <div
-        className={`fixed z-60 inset-y-0 left-0  w-64 bg-white shadow-lg transform transition duration-300 ease-in-out md:translate-x-0 md:static md:shadow-none ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
+      <div className={`fixed z-60 inset-y-0 left-0 w-64 bg-white shadow-lg transform transition duration-300 ease-in-out md:translate-x-0 md:static md:shadow-none ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full fixed w-full">
           <div className="flex items-center justify-between px-4 py-5">
-<div
-  className="text-3xl font-bold text-indigo-600 cursor-pointer font-poppins tracking-wide"
-  onClick={() => navigate('/dashboard')}
->
-  <img 
-    src={logo} 
-    alt="Logo" 
-    className="w-16 h-16 object-contain" 
-  />
-</div>
+            <div className="text-3xl font-bold text-indigo-600 cursor-pointer font-poppins tracking-wide" onClick={() => navigate('/dashboard')}>
+              <img src={logo} alt="Logo" className="w-16 h-16 object-contain" />
+            </div>
 
-
-            <button
-              type="button"
-              className="md:hidden text-gray-500 hover:text-gray-600"
-              onClick={() => setIsOpen(false)}
-            >
+            <button type="button" className="md:hidden text-gray-500 hover:text-gray-600" onClick={() => setIsOpen(false)}>
               <HiX className="h-6 w-6" />
             </button>
           </div>
@@ -95,11 +55,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center px-4 py-2 text-base font-medium rounded-md ${
-                  item.current
-                    ? 'bg-indigo-100 text-indigo-800'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
+                className={`flex items-center px-4 py-2 text-base font-medium rounded-md ${item.current ? 'bg-indigo-100 text-indigo-800' : 'text-gray-700 hover:bg-gray-100'}`}
                 onClick={() => setIsOpen(false)}
               >
                 {item.name}
@@ -108,9 +64,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           </nav>
 
           <div className="p-4 mt-auto">
-            <div
-              className="flex gap-2 text-gray-500 p-3 rounded-lg transition-colors text-[1rem] cursor-pointer hover:bg-gray-100"
-             onClick={() => setShowModal(true)}
+            <div className="flex gap-2 text-gray-500 p-3 rounded-lg transition-colors text-[1rem] cursor-pointer hover:bg-gray-100"
+                 onClick={() => setShowModal(true)}
             >
               <LogOut size={20} />
               <p className="text-base font-medium">Logout</p>
@@ -120,16 +75,20 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       </div>
 
       {showModal && (
-        <ConfirmLogout
+        <Confirm
           onClose={() => setShowModal(false)}
           onConfirm={handleLogout}
-          message="Are you sure you want to log out?"
+          title={logoutModalData.title}
+          message={logoutModalData.message}
+          buttonText={logoutModalData.buttonText}
+          Icon={logoutModalData.Icon}
+           buttonColor={logoutModalData.buttonColor} 
+             iconBgColor={logoutModalData.iconBgColor}
+            iconColor={logoutModalData.iconColor}
         />
       )}
-
     </>
   );
 };
 
-export default Sidebar;  
-     
+export default Sidebar;

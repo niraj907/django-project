@@ -68,6 +68,11 @@ const Header = ({ setSidebarOpen }) => {
           <h1 className="text-xl font-semibold text-gray-800">Dashboard</h1>
         </div>
 
+  {/* <button className='bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-4 mx-4 rounded-md shadow-sm transition duration-300'>
+        + Add Category
+      </button> */}
+
+
         {/* User Dropdown */}
         <div className="flex items-center space-x-4">
           <div className="relative" ref={dropdownRef}>

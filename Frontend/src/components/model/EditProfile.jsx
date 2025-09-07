@@ -74,7 +74,7 @@ const EditProfile = ({ user, onClose }) => {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
     >
       <div
         className="relative mx-4 w-full max-w-3xl rounded-2xl bg-slate-50 shadow-2xl"

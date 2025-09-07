@@ -38,8 +38,8 @@ const DeleteAccount = ({ onClose }) => {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
-      onClick={onClose}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      // onClick={onClose}
     >
       <div
         className="relative m-4 w-full max-w-md rounded-2xl bg-slate-50 shadow-2xl dark:bg-slate-900"
