@@ -52,45 +52,83 @@ export const useAuthStore = create(
 },
 
           // Login function
- login: async (email, password) => {
-        set({ isLoading: true, error: null });
-        try {
-          const response = await axios.post(
-            `${API_URL}/login/`,
-            { email, password }
-          );
-          console.log("Response Headers: ", response.headers);
-          console.log("login successful:", response.data);
+//  login: async (email, password) => {
+//         set({ isLoading: true, error: null });
+//         try {
+//           const response = await axios.post(
+//             `${API_URL}/login/`,
+//             { email, password }
+//           );
+//           console.log("Response Headers: ", response.headers);
+//           console.log("login successful:", response.data);
 
-          // --- FIX START ---
-          // The access token is nested inside the 'token' object in your API response.
-          const accessToken = response.data.token.access;
+//           // --- FIX START ---
+//           // The access token is nested inside the 'token' object in your API response.
+//           const accessToken = response.data.token.access;
 
-          if (accessToken) {
-            localStorage.setItem("access_token", accessToken);
-            set({
-              isAuthenticated: true,
-              // Assuming the user data is not returned directly in login response
-              // you might need another API call to fetch user profile using the token
-              user: response.data.user || null,
-              error: null,
-              isLoading: false,
-            });
-            console.log("Access token stored:", accessToken);
-          } else {
-             throw new Error("Access token not found in response");
-          }
-          // --- FIX END ---
+//           if (accessToken) {
+//             localStorage.setItem("access_token", accessToken);
+//             set({
+//               isAuthenticated: true,
+//               // Assuming the user data is not returned directly in login response
+//               // you might need another API call to fetch user profile using the token
+//               user: response.data.user || null,
+//               error: null,
+//               isLoading: false,
+//             });
+//             console.log("Access token stored:", accessToken);
+//           } else {
+//              throw new Error("Access token not found in response");
+//           }
+//           // --- FIX END ---
 
-        } catch (error) {
-          set({
-            error: error.response?.data?.message || "Error logging in",
-            isLoading: false,
-          });
-          throw error;
-        }
-      },
+//         } catch (error) {
+//           set({
+//             error: error.response?.data?.message || "Error logging in",
+//             isLoading: false,
+//           });
+//           throw error;
+//         }
+//       },
     
+// Login function
+login: async (email, password) => {
+  set({ isLoading: true, error: null });
+  try {
+    const response = await axios.post(
+      `${API_URL}/login/`,
+      { email, password }
+    );
+    console.log("login successful:", response.data);
+
+    // ✅ Extract both tokens
+    const accessToken = response.data.token.access;
+    const refreshToken = response.data.token.refresh;
+
+    if (accessToken && refreshToken) {
+      localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("refresh_token", refreshToken); // ✅ Save refresh token
+
+      set({
+        isAuthenticated: true,
+        user: response.data.user || null,
+        error: null,
+        isLoading: false,
+      });
+
+      console.log("Tokens stored:", { accessToken, refreshToken });
+    } else {
+      throw new Error("Tokens not found in response");
+    }
+
+  } catch (error) {
+    set({
+      error: error.response?.data?.message || "Error logging in",
+      isLoading: false,
+    });
+    throw error;
+  }
+},
 
 
 verifyEmail: async (code) => {
@@ -316,41 +354,85 @@ DeleteAccount: async () => {
 
 
 
-      logout: async () => {
-        try {
-          const accessToken = localStorage.getItem("access_token");
+      // logout: async () => {
+      //   try {
+      //     const accessToken = localStorage.getItem("access_token");
    
-          const response = await axios.post(
-            `${API_URL}/logout/`,
-            null, 
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
-          );
+      //     const response = await axios.post(
+      //       `${API_URL}/logout/`,
+      //       null, 
+      //       {
+      //         headers: {
+      //           "Content-Type": "application/json",
+      //           Authorization: `Bearer ${accessToken}`,
+      //         },
+      //       }
+      //     );
 
-          console.log("Logout successful:", response.data);
+      //     console.log("Logout successful:", response.data);
 
           
-          localStorage.removeItem("access_token");
+      //     localStorage.removeItem("access_token");
        
-          localStorage.removeItem("auth-store");
+      //     localStorage.removeItem("auth-store");
 
-          set({
-            user: null,
-            isAuthenticated: false,
-            message: "Logged out successfully", 
-            error: null,
-          });
-        } catch (error) {
-          console.error("Logout error:", error);
-          set({
-            error: error.response?.data?.detail || "Logout failed",
-          });
-        }
-      },
+      //     set({
+      //       user: null,
+      //       isAuthenticated: false,
+      //       message: "Logged out successfully", 
+      //       error: null,
+      //     });
+      //   } catch (error) {
+      //     console.log("authStore logout",error)
+      //     console.error("Logout error:", error);
+      //     set({
+      //       error: error.response?.data?.detail || "Logout failed",
+      //     });
+      //   }
+      // },
+
+
+
+      logout: async () => {
+  try {
+    const accessToken = localStorage.getItem("access_token");
+    const refreshToken = localStorage.getItem("refresh_token"); // ✅ get refresh
+
+    if (!refreshToken) {
+      throw new Error("No refresh token found. Already logged out?");
+    }
+
+    const response = await axios.post(
+      `${API_URL}/logout/`,
+      { refresh: refreshToken },  // ✅ send refresh token in body
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    console.log("Logout successful:", response.data);
+
+    // ✅ clear tokens
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("auth-store");
+
+    set({
+      user: null,
+      isAuthenticated: false,
+      message: "Logged out successfully",
+      error: null,
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    set({
+      error: error.response?.data?.error || "Logout failed",
+    });
+  }
+},
 
     }),
 

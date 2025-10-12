@@ -3,10 +3,11 @@ import { HiX } from 'react-icons/hi';
 import { LogOut } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from "@/assets/logo.png";
-import { useAuthStore } from '../store/authStore';
+
 import { toast } from "sonner";
 import Confirm from '../model/Confirm';
 import { logoutModalData } from '../model/confirmdata';
+import { useAuthStore } from '../store/authStore';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
@@ -25,9 +26,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     try {
       await logout();
       toast.success("Logout successful", { duration: 900 });
-      localStorage.clear();
+      // localStorage.clear();
       navigate("/");
     } catch (error) {
+      console.log("Sidebar error",error)
       toast.error("Logout failed", { duration: 900 });
     } finally {
       setShowModal(false);
