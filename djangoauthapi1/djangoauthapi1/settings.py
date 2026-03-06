@@ -92,9 +92,10 @@ DATABASES = {
     }
 }
 
-if not DEBUG:
-    DATABASES['default'] = dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
+database_url = os.environ.get('DATABASE_URL')
+if not DEBUG and database_url:
+    DATABASES['default'] = dj_database_url.parse(
+        database_url,
         conn_max_age=600,
     )
 
