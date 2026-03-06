@@ -28,7 +28,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-8kl$@04eg)meh&umqjsvn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('RENDER', '') == ''
 
-ALLOWED_HOSTS = ['*'] # Allows all hosts (change to specific domains later)
+ALLOWED_HOSTS = ['django-project-uu1b.onrender.com', 'localhost', '127.0.0.1', '*']
 
 
 # Application definition
