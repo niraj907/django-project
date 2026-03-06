@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import axios from "axios";
 
-const API_URL = "http://127.0.0.1:8000/api/budget/";
+const API_URL = import.meta.env.VITE_API_BASE_URL + "budget/";
 
 // Helper to get auth headers
 const getAuthHeaders = () => {

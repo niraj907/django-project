@@ -4,8 +4,7 @@ import { useAuthStore } from "../store/authStore";
 import { toast } from "sonner";
 
 
-// ✅ 1. Define the missing constant for your backend URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_DOMAIN = import.meta.env.VITE_API_DOMAIN || "http://127.0.0.1:8000";
 
 const EditProfile = ({ user, onClose }) => {
   const { updateProfile, isLoading } = useAuthStore();
@@ -37,8 +36,8 @@ const EditProfile = ({ user, onClose }) => {
     }
 
     return imagePath.startsWith("/")
-      ? `${API_BASE_URL}${imagePath}`
-      : `${API_BASE_URL}/${imagePath}`;
+      ? `${API_DOMAIN}${imagePath}`
+      : `${API_DOMAIN}/${imagePath}`;
   };
 
   useEffect(() => {
