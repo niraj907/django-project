@@ -6,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "../store/authStore";
 
 const DeleteAccount = ({ onClose }) => {
-  const { DeleteAccount } = useAuthStore(); 
+  const { DeleteAccount: deleteAccount } = useAuthStore();
   const navigate = useNavigate();
 
   const confirmationText = "Delete my account";
@@ -14,10 +14,10 @@ const DeleteAccount = ({ onClose }) => {
 
   // ✅ React Query mutation for deleting account
   const mutation = useMutation({
-    mutationFn: DeleteAccount,
+    mutationFn: deleteAccount,
     onSuccess: (data) => {
       toast.success(data.message || "Account deleted successfully");
-      navigate("/"); 
+      navigate("/");
       onClose();
     },
     onError: (error) => {
@@ -25,7 +25,7 @@ const DeleteAccount = ({ onClose }) => {
     },
   });
 
-  const isButtonDisabled = inputValue !== confirmationText || mutation.isLoading;
+  const isButtonDisabled = inputValue !== confirmationText || mutation.isPending;
 
   const handleDelete = (e) => {
     e.preventDefault();
@@ -38,35 +38,33 @@ const DeleteAccount = ({ onClose }) => {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      // onClick={onClose}
+      className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm p-4"
     >
       <div
-        className="relative m-4 w-full max-w-md rounded-2xl bg-slate-50 shadow-2xl dark:bg-slate-900"
+        className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         <form onSubmit={handleDelete}>
           {/* --- Modal Header --- */}
-          <div className="flex items-start gap-4 p-6">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
+          <div className="flex items-start gap-4 p-8">
+            <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-red-50">
               <ShieldAlert
-                className="h-7 w-7 text-red-600 dark:text-red-400"
+                className="h-7 w-7 text-red-600"
                 aria-hidden="true"
               />
             </div>
             <div className="flex-grow">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              <h2 className="text-2xl font-bold text-gray-900 font-outfit">
                 Delete Account
               </h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                This action cannot be undone. This will permanently delete your
-                account and all its data.
+              <p className="mt-1 text-sm text-gray-500 font-outfit">
+                This action is permanent and cannot be undone. All your data will be removed.
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-800 dark:hover:bg-slate-700 dark:hover:text-white transition-colors"
+              className="p-2 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-900 transition-all"
               aria-label="Close modal"
             >
               <X size={20} />
@@ -74,14 +72,13 @@ const DeleteAccount = ({ onClose }) => {
           </div>
 
           {/* --- Modal Body --- */}
-          <div className="px-6 pb-6 space-y-4">
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              To confirm this action, please type the following phrase into the
-              box below:
+          <div className="px-8 pb-8 space-y-5">
+            <p className="text-sm font-medium text-gray-600 font-outfit">
+              To confirm, please type the phrase below:
             </p>
 
-            <div className="w-full text-center p-2 rounded-lg bg-slate-200 dark:bg-slate-800">
-              <code className="font-mono font-medium text-slate-800 dark:text-slate-200 tracking-wider">
+            <div className="w-full text-center py-4 bg-gray-50 rounded-2xl border border-gray-100 italic">
+              <code className="font-mono font-bold text-gray-800 tracking-wider">
                 {confirmationText}
               </code>
             </div>
@@ -91,26 +88,27 @@ const DeleteAccount = ({ onClose }) => {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white dark:bg-slate-900 dark:border-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400 dark:text-white"
+              placeholder="Type the phrase here..."
+              className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl outline-none focus:border-red-500 focus:ring-4 focus:ring-red-600/5 transition-all font-outfit text-gray-900"
               aria-label="Confirmation text input"
             />
           </div>
 
           {/* --- Modal Footer --- */}
-          <div className="flex justify-end gap-4 px-6 py-4 bg-slate-100 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl">
+          <div className="flex justify-end gap-3 p-8 bg-gray-50 border-t border-gray-100 rounded-b-3xl">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400 transition"
+              className="px-6 py-3 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-outfit"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isButtonDisabled}
-              className="px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-500 transition-colors disabled:bg-red-300 dark:disabled:bg-red-900/50 disabled:cursor-not-allowed"
+              className="px-6 py-3 text-sm font-bold text-white bg-red-600 rounded-xl shadow-lg shadow-red-600/20 hover:bg-red-700 disabled:opacity-50 transition-all font-outfit"
             >
-              {mutation.isLoading ? "Deleting..." : "I understand, delete my account"}
+              {mutation.isPending ? "Deleting..." : "Delete Account"}
             </button>
           </div>
         </form>

@@ -26,7 +26,7 @@ class UserManager(BaseUserManager):
         """
         Creates and saves a superuser with the given email, name and password.
         """
-        user = self.create_user(
+        user = self.create_user(       
             email,
             password=password,
             name=name

@@ -45,21 +45,26 @@ const CategoryModal = ({ onClose, category }) => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm p-4"
     >
       <div
-        className="relative flex w-11/12 max-w-md flex-col rounded-lg bg-white p-6 shadow-xl"
+        className="relative w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <h2 id="modal-title" className="text-xl font-semibold text-gray-900">
-            {category ? "Edit Category" : "Add New Category"}
-          </h2>
+        <div className="flex items-center justify-between p-8 border-b border-gray-100">
+          <div>
+            <h2 id="modal-title" className="text-2xl font-bold text-gray-900 font-outfit">
+              {category ? "Edit Category" : "New Category"}
+            </h2>
+            <p className="text-sm text-gray-500 mt-1 font-outfit">
+              {category ? "Modify your spending category details." : "Create a new category for your expenses."}
+            </p>
+          </div>
           <button
             type="button"
             aria-label="Close modal"
-            className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-800"
+            className="p-2.5 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-900 transition-all font-outfit"
             onClick={onClose}
           >
             <X size={20} />
@@ -67,60 +72,60 @@ const CategoryModal = ({ onClose, category }) => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
           <div>
-            <label htmlFor="categoryName" className="mb-1 block text-sm font-medium text-gray-700">
+            <label htmlFor="categoryName" className="text-sm font-bold text-gray-700 font-outfit block mb-2">
               Name
             </label>
             <input
               type="text"
               id="categoryName"
-              placeholder="Enter category name"
-              className={`w-full rounded-md border px-3 py-2 text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
+              placeholder="e.g. Groceries, Entertainment"
+              className={`w-full px-4 py-3 bg-gray-50 border rounded-xl outline-none transition-all font-outfit ${
                 errors.categoryName
-                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
+                  ? 'border-red-400 focus:ring-4 focus:ring-red-600/5'
+                  : 'border-gray-100 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5'
               }`}
               {...register("categoryName", {
                 required: "Category name is required.",
                 minLength: { value: 3, message: "Name must be at least 3 characters long." }
               })}
             />
-            {errors.categoryName && <p className="mt-1 text-sm text-red-600">{errors.categoryName.message}</p>}
+            {errors.categoryName && <p className="text-red-500 text-xs mt-1 font-bold font-outfit">{errors.categoryName.message}</p>}
           </div>
 
           <div>
-            <label htmlFor="categoryDescription" className="mb-1 block text-sm font-medium text-gray-700">
+            <label htmlFor="categoryDescription" className="text-sm font-bold text-gray-700 font-outfit block mb-2">
               Description
             </label>
             <textarea
               id="categoryDescription"
               rows={3}
-              placeholder="A brief description of the category..."
-              className={`w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm transition-colors placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+              placeholder="What kind of expenses go here?"
+              className={`w-full resize-none px-4 py-3 bg-gray-50 border rounded-xl outline-none transition-all font-outfit ${
                 errors.categoryDescription
-                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
+                  ? 'border-red-400 focus:ring-4 focus:ring-red-600/5'
+                  : 'border-gray-100 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5'
               }`}
               {...register("categoryDescription", { required: "Description is required." })}
             />
-            {errors.categoryDescription && <p className="mt-1 text-sm text-red-600">{errors.categoryDescription.message}</p>}
+            {errors.categoryDescription && <p className="text-red-500 text-xs mt-1 font-bold font-outfit">{errors.categoryDescription.message}</p>}
           </div>
 
           {/* Buttons */}
-          <div className="mt-8 flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-50">
             <button
               type="button"
-              className="rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-900 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+              className="px-6 py-3 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-outfit"
               onClick={onClose}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-indigo-800 px-5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-800 focus:ring-offset-2"
+              className="px-6 py-3 text-sm font-bold text-white bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all font-outfit"
             >
-              {category ? "Update" : "Save"}
+              {category ? "Update Category" : "Save Category"}
             </button>
           </div>
         </form>

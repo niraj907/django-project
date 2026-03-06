@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, Camera } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { toast } from "sonner";
 
 
 // ✅ 1. Define the missing constant for your backend URL
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 const EditProfile = ({ user, onClose }) => {
   const { updateProfile, isLoading } = useAuthStore();
@@ -23,17 +23,31 @@ const EditProfile = ({ user, onClose }) => {
 
   // ✅ 2. Make the function more robust to handle non-string values
   const getImageUrl = (imagePath) => {
-    // If imagePath is not a string or is empty/null, return null
-    if (typeof imagePath !== 'string' || !imagePath) {
+    if (typeof imagePath !== "string" || !imagePath) {
       return null;
     }
-    // If it's a blob URL from the file preview, use it directly
-    if (imagePath.startsWith('blob:')) {
+
+    if (
+      imagePath.startsWith("blob:") ||
+      imagePath.startsWith("data:") ||
+      imagePath.startsWith("http://") ||
+      imagePath.startsWith("https://")
+    ) {
       return imagePath;
     }
-    // Otherwise, it's a path from the server, so prepend the base URL
-    return `${API_BASE_URL}${imagePath}`;
+
+    return imagePath.startsWith("/")
+      ? `${API_BASE_URL}${imagePath}`
+      : `${API_BASE_URL}/${imagePath}`;
   };
+
+  useEffect(() => {
+    return () => {
+      if (preview?.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,8 +60,14 @@ const EditProfile = ({ user, onClose }) => {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      const objectUrl = URL.createObjectURL(file);
       setSelectedFile(file);
-      setPreview(URL.createObjectURL(file));
+      setPreview((prev) => {
+        if (prev?.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return objectUrl;
+      });
     }
   };
 
@@ -66,7 +86,20 @@ const EditProfile = ({ user, onClose }) => {
       onClose();
     } catch (err) {
       console.error("Error updating profile:", err);
-      toast.error("Failed to update profile. Please try again.");
+
+      // Extract error message from the backend response
+      const serverError = err.response?.data;
+      if (serverError && typeof serverError === "object") {
+        // Handle field-specific errors
+        const firstKey = Object.keys(serverError)[0];
+        const errorMsg = Array.isArray(serverError[firstKey])
+          ? serverError[firstKey][0]
+          : serverError[firstKey];
+
+        toast.error(`${firstKey.replace("_", " ")}: ${errorMsg}`);
+      } else {
+        toast.error("Failed to update profile. Please check your details and try again.");
+      }
     }
   };
 
@@ -74,52 +107,51 @@ const EditProfile = ({ user, onClose }) => {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm p-4"
     >
       <div
-        className="relative mx-4 w-full max-w-3xl rounded-2xl bg-slate-50 shadow-2xl"
+        className="relative w-full max-w-2xl rounded-3xl bg-white shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         {/* --- Modal Header --- */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+        <div className="flex items-center justify-between p-8 border-b border-gray-100">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Edit Profile</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Update your photo and personal details.
+            <h2 className="text-2xl font-bold text-gray-900 font-outfit">Edit Profile</h2>
+            <p className="text-sm text-gray-500 mt-1 font-outfit">
+              Update your photo and personal information.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors"
+            className="p-2.5 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-900 transition-all font-outfit"
             aria-label="Close modal"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
         {/* --- Modal Body & Form --- */}
         <form onSubmit={handleSubmit}>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="p-8">
+            <div className="space-y-8">
               {/* --- Profile Picture Section --- */}
-              <div className="flex flex-col items-center md:items-start">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Profile Photo
-                </label>
+              <div className="flex flex-col items-center">
                 <div className="relative group">
-                  <img
-                    src={
-                      getImageUrl(preview) ||
-                      `https://ui-avatars.com/api/?name=${user?.name || "A"}&background=random&size=128`
-                    }
-                    alt={user?.name ? user.name.charAt(0).toUpperCase() : "A"}
-                    className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md"
-                  />
+                  <div className="w-28 h-28 rounded-3xl bg-indigo-50 border-4 border-white shadow-xl overflow-hidden">
+                    <img
+                      src={
+                        getImageUrl(preview) ||
+                        `https://ui-avatars.com/api/?name=${user?.name || "A"}&background=4f46e5&color=fff&size=128`
+                      }
+                      alt="Profile"
+                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                    />
+                  </div>
                   <label
                     htmlFor="avatar-upload"
-                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    className="absolute -bottom-2 -right-2 p-2.5 bg-indigo-600 rounded-xl text-white shadow-lg cursor-pointer hover:bg-indigo-700 transition-all hover:scale-110"
                   >
-                    <Camera className="text-white" size={32} />
+                    <Camera size={18} />
                   </label>
                   <input
                     id="avatar-upload"
@@ -129,122 +161,92 @@ const EditProfile = ({ user, onClose }) => {
                     onChange={handleFileChange}
                   />
                 </div>
+                <p className="mt-3 text-xs font-bold text-gray-400 uppercase tracking-widest font-outfit">Profile Photo</p>
               </div>
 
               {/* --- Form Fields Section --- */}
-              <div className="md:col-span-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {/* Name Input */}
-                  <div>
-                    <label
-                      htmlFor="name"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="mt-1 block w-full px-3 py-2 border rounded-md"
-                      placeholder="Your full name"
-                    />
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="name" className="text-sm font-bold text-gray-700 font-outfit block mb-2">Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none font-outfit"
+                    placeholder="John Doe"
+                  />
+                </div>
 
-                  {/* Username Input */}
-                  <div>
-                    <label
-                      htmlFor="username"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Username
-                    </label>
-                    <input
-                      type="text"
-                      id="username"
-                      name="username"
-                      value={formData.username}
-                      onChange={handleChange}
-                      className="mt-1 block w-full px-3 py-2 border rounded-md"
-                      placeholder="Your username"
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="username" className="text-sm font-bold text-gray-700 font-outfit block mb-2">Username</label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none font-outfit"
+                    placeholder="johndoe"
+                  />
+                </div>
 
-                  {/* Permanent Address */}
-                  <div>
-                    <label
-                      htmlFor="permanent_address"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Permanent Address
-                    </label>
-                    <input
-                      type="text"
-                      id="permanent_address"
-                      name="permanent_address"
-                      value={formData.permanent_address}
-                      onChange={handleChange}
-                      className="mt-1 block w-full px-3 py-2 border rounded-md"
-                      placeholder="Your permanent address"
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="permanent_address" className="text-sm font-bold text-gray-700 font-outfit block mb-2">Permanent Address</label>
+                  <input
+                    type="text"
+                    id="permanent_address"
+                    name="permanent_address"
+                    value={formData.permanent_address}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none font-outfit"
+                    placeholder="New York, USA"
+                  />
+                </div>
 
-                  {/* Phone Number */}
-                  <div>
-                    <label
-                      htmlFor="phone_number"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Mobile No
-                    </label>
-                    <input
-                      type="text"
-                      id="phone_number"
-                      name="phone_number"
-                      value={formData.phone_number}
-                      onChange={handleChange}
-                      className="mt-1 block w-full px-3 py-2 border rounded-md"
-                      placeholder="Enter mobile number"
-                    />
-                  </div>
-                  
-                  {/* Email Input (read-only) */}
-                  <div className="sm:col-span-2">
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      disabled
-                      className="mt-1 block w-full px-3 py-2 border rounded-md bg-gray-100"
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="phone_number" className="text-sm font-bold text-gray-700 font-outfit block mb-2">Mobile No</label>
+                  <input
+                    type="text"
+                    id="phone_number"
+                    name="phone_number"
+                    value={formData.phone_number}
+                    onChange={handleChange}
+                    maxLength={10}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none font-outfit"
+                    placeholder="98XXXXXXXX"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label htmlFor="email" className="text-sm font-bold text-gray-700 font-outfit block mb-2">Email Address</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    disabled
+                    className="w-full px-4 py-3 bg-gray-100 border border-gray-100 rounded-xl text-gray-500 font-outfit cursor-not-allowed"
+                  />
                 </div>
               </div>
             </div>
           </div>
 
           {/* --- Modal Footer --- */}
-          <div className="flex justify-end gap-4 p-6 bg-gray-100 border-t border-slate-200 rounded-b-2xl">
+          <div className="flex justify-end gap-3 p-8 bg-gray-50 border-t border-gray-100 rounded-b-3xl">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white rounded-lg border hover:bg-gray-100"
+              className="px-6 py-3 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-outfit"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 text-sm font-bold text-white bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 disabled:opacity-50 transition-all font-outfit"
             >
               {isLoading ? "Saving..." : "Save Changes"}
             </button>

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, Loader } from 'lucide-react';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaGoogle } from 'react-icons/fa';
 import { toast } from "sonner";
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { useAuthStore } from '../store/authStore';
+import { useGoogleLogin } from '@react-oauth/google';
 
 
 const SignupPage = () => {
@@ -12,7 +13,29 @@ const SignupPage = () => {
   const [showConfirmPassword, setConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
-  const { registerUser, isLoading } = useAuthStore();
+  const { registerUser, googleLogin, isLoading } = useAuthStore();
+
+  const handleGoogleSuccess = async (tokenResponse) => {
+    try {
+      const idToken = tokenResponse.access_token;
+      await googleLogin(idToken);
+      toast.success("Google Account connected successfully");
+      navigate("/dashboard");
+    } catch (err) {
+      const errorData = err.response?.data?.errors;
+      const backendError =
+        errorData?.email?.[0] ||
+        (errorData ? JSON.stringify(errorData) : null) ||
+        "Google sign up failed.";
+      toast.error(backendError);
+      console.log("Error Submission failed", err);
+    }
+  };
+
+  const googleLoginHandler = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: () => toast.error("Google Sign up Failed"),
+  });
   const {
     register,
     handleSubmit,
@@ -33,7 +56,18 @@ const SignupPage = () => {
       toast.success("Registration successful");
       navigate("/verify-email");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Registration failed");
+      const errorData = err.response?.data?.errors;
+      let errorMsg = "Registration failed";
+      if (errorData) {
+        // Get the first error message from any field
+        const firstKey = Object.keys(errorData)[0];
+        if (firstKey && Array.isArray(errorData[firstKey])) {
+          errorMsg = errorData[firstKey][0];
+        } else if (firstKey) {
+          errorMsg = JSON.stringify(errorData[firstKey]);
+        }
+      }
+      toast.error(errorMsg);
     }
   };
 
@@ -126,19 +160,36 @@ const SignupPage = () => {
         )}
 
         {/* Submit Button */}
- <button
-  type="submit"
-  disabled={isLoading}
-  className="w-full bg-[#66659F] hover:bg-[#66659Fcc] transition-colors py-3 mt-4 rounded text-white font-semibold cursor-pointer flex justify-center items-center"
->
-  {isLoading ? (
-    <div className="flex items-center justify-center">
-      <Loader className="w-6 h-6 animate-spin" />
-    </div>
-  ) : (
-    "Sign Up"
-  )}
-</button>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-[#66659F] hover:bg-[#66659Fcc] transition-colors py-3 mt-4 rounded text-white font-semibold cursor-pointer flex justify-center items-center"
+        >
+          {isLoading ? (
+            <div className="flex items-center justify-center">
+              <Loader className="w-6 h-6 animate-spin" />
+            </div>
+          ) : (
+            "Sign Up"
+          )}
+        </button>
+
+        {/* Divider */}
+        <div className="flex items-center my-6">
+          <div className="flex-grow border-t border-gray-300"></div>
+          <span className="flex-shrink mx-4 text-gray-400 text-sm">OR</span>
+          <div className="flex-grow border-t border-gray-300"></div>
+        </div>
+
+        {/* Google Sign-up Button */}
+        <button
+          onClick={() => googleLoginHandler()}
+          disabled={isLoading}
+          type="button"
+          className="w-full flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-50 transition-colors py-2.5 rounded text-gray-700 font-semibold cursor-pointer disabled:opacity-50"
+        >
+          <FaGoogle className='mr-2 text-red-500' /> Sign up with Google
+        </button>
 
 
         <p className="text-center mt-4">

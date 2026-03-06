@@ -1,12 +1,17 @@
+import random
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from account.serializers import UserChangePasswordSerializer, SendPasswordResetEmailSerializer, UserPasswordResetSerializer, UserProfileSerializer , UserRegistrationserializer , UserLoginserializer
 from account.models import User
 from django.contrib.auth import authenticate
+from django.core.mail import send_mail
 from account.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken , TokenError
 from rest_framework.permissions import IsAuthenticated
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+import requests as py_requests
 
 # from rest_framework_simplejwt.exceptions import AuthenticationFailed
 # def get_tokens_for_user(user):
@@ -73,6 +78,38 @@ class VerifyOTPView(APIView):
             return Response({'message': 'OTP verified successfully'}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResendOTPView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.is_verified:
+            return Response({'error': 'User is already verified'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate a new 6-digit OTP
+        new_otp = str(random.randint(100000, 999999))
+        user.otp = new_otp
+        user.save()
+
+        # Send email with the new OTP
+        send_mail(
+            subject='Your New OTP Verification Code',
+            message=f'Hello {user.name},\n\nYour new OTP code is: {new_otp}\n\nThank you!',
+            from_email='chaudhariiiniraj@gmail.com',
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+
+        return Response({'message': 'A new OTP has been sent to your email.'}, status=status.HTTP_200_OK)
 
 
 class UserLoginView(APIView):
@@ -256,3 +293,55 @@ class DeleteAccountView(APIView):
             {"message": "Your account has been deleted successfully."},
             status=status.HTTP_200_OK
         )
+
+
+class GoogleLoginView(APIView):
+    renderer_classes = [UserRenderer]
+
+    def post(self, request):
+        token = request.data.get('token')
+        if not token:
+            return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Try verifying as an ID Token (JWT) first
+            try:
+                idinfo = id_token.verify_oauth2_token(token, google_requests.Request())
+            except ValueError:
+                # If not a JWT, try treating it as an Access Token and fetch user info
+                response = py_requests.get(
+                    'https://www.googleapis.com/oauth2/v3/userinfo',
+                    params={'access_token': token}
+                )
+                if not response.ok:
+                    return Response({'error': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
+                idinfo = response.json()
+
+            # ID token/Access token is valid.
+            email = idinfo.get('email')
+            name = idinfo.get('name', '')
+            
+            if not email:
+                return Response({'error': 'Email not found in Google account'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check if user exists, else create
+            user, created = User.objects.get_or_create(email=email, defaults={
+                'name': name,
+                'is_verified': True,
+            })
+
+            if created:
+                user.set_unusable_password() 
+                user.save()
+
+            token_data = get_tokens_for_user(user)
+            user_data = UserProfileSerializer(user).data
+            
+            return Response({
+                "token": token_data,
+                "user": user_data,
+                "message": "Google Login Successful"
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

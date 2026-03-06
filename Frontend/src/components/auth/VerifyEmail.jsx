@@ -7,7 +7,29 @@ const VerifyEmail = () => {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const inputRefs = useRef([]);
   const navigate = useNavigate();
-  const { error, verifyEmail } = useAuthStore();
+  const { verifyEmail, resendOTP } = useAuthStore();
+  const [timer, setTimer] = useState(0);
+
+  // Countdown timer for resend cooldown
+  useEffect(() => {
+    if (timer <= 0) return;
+    const interval = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const handleResend = async () => {
+    try {
+      await resendOTP();
+      toast.success("A new OTP has been sent to your email.");
+      setTimer(60); // 60-second cooldown
+    } catch (err) {
+      toast.error(
+        err.response?.data?.error || "Failed to resend OTP. Please try again."
+      );
+    }
+  };
 
   const handleChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
@@ -63,7 +85,7 @@ const VerifyEmail = () => {
     try {
       await verifyEmail(verificationCode);
       toast.success("Email verified successfully");
-      navigate("/login");
+      navigate("/");
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Something went wrong during email verification!"
@@ -75,7 +97,7 @@ const VerifyEmail = () => {
     <div className="flex items-center justify-center bg-center h-screen w-full bg-gradient-to-br from-indigo-100 via-white to-indigo-50 px-4">
       <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-lg space-y-6 animate-fadeIn">
         <h1 className="text-3xl font-bold text-center text-gray-800">Verify Your Email</h1>
-        <p className="text-center tex[#66659F] text-sm">
+        <p className="text-center text-[#66659F] text-sm">
           Enter the 6-digit code sent to your email address.
         </p>
 
@@ -106,7 +128,18 @@ const VerifyEmail = () => {
         </form>
 
         <p className="text-xs text-center text-gray-400">
-          Didn't receive a code? Check your spam folder or try resending the code.
+          Didn't receive a code?{" "}
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={timer > 0}
+            className={`font-semibold ${timer > 0
+              ? "text-gray-400 cursor-not-allowed"
+              : "text-[#66659F] hover:underline cursor-pointer"
+              }`}
+          >
+            {timer > 0 ? `Resend in ${timer}s` : "Resend Code"}
+          </button>
         </p>
       </div>
     </div>

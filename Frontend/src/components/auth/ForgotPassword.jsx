@@ -21,7 +21,11 @@ const ForgotPassword = () => {
       toast.success("Reset link sent successfully!");
       reset();
     } catch (err) {
-      toast.error(error || "Email not found. Please enter a registered email.");
+      toast.error(
+        err?.response?.data?.message ||
+          error ||
+          "Email not found. Please enter a registered email."
+      );
     }
   };
 
